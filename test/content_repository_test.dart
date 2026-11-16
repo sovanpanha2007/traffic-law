@@ -65,6 +65,31 @@ void main() {
     expect(repo.loadQuestions(), throwsA(isA<ContentException>()));
   });
 
+  test('T37 normal: signs load from JSON into their categories', () async {
+    final repo = ContentRepository(
+      loader: (_) async => '{"categories":['
+          '{"id":"warning","title":"Warning"},{"id":"ban","title":"Ban"}],'
+          '"signs":['
+          '{"id":"w01","category":"warning","name":"a","meaning":"a","image":"a.png"},'
+          '{"id":"b01","category":"ban","name":"b","meaning":"b","image":"b.png"}]}',
+    );
+
+    final categories = await repo.loadSignCategories();
+
+    expect(categories.map((c) => c.id), ['warning', 'ban']);
+    expect(categories[0].signs.map((s) => s.id), ['w01']);
+    expect(categories[1].signs.map((s) => s.id), ['b01']);
+  });
+
+  test('T38 invalid: a sign whose category is not listed is rejected', () async {
+    final repo = ContentRepository(
+      loader: (_) async => '{"categories":[{"id":"warning","title":"Warning"}],'
+          '"signs":[{"id":"x","category":"ban","name":"x","meaning":"x","image":"x.png"}]}',
+    );
+
+    expect(repo.loadSignCategories(), throwsA(isA<ContentException>()));
+  });
+
   test('T26 boundary: a chapter cannot start before page 1', () {
     expect(
       () => Chapter(id: 1, title: 'Bad', startPage: 0),

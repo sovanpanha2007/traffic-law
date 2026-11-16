@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../models/chapter.dart';
 import '../models/question.dart';
 import '../models/road_sign.dart';
+import '../models/sign_category.dart';
 import '../models/topic.dart';
 
 typedef AssetLoader = Future<String> Function(String path);
@@ -42,13 +43,20 @@ class ContentRepository {
     }
   }
 
-  Future<Map<String, String>> loadSignCategories() async {
+  Future<List<SignCategory>> loadSignCategories() async {
     final json = await _readMap(signsPath);
-    final categories = json['categories'] as List;
-    return {
+    final categories = (json['categories'] as List).cast<Map<String, dynamic>>();
+    final signs = await loadSigns();
+    final categoryIds = categories.map((c) => c['id'] as String).toSet();
+    for (final sign in signs) {
+      if (!categoryIds.contains(sign.category)) {
+        throw ContentException('Sign ${sign.id} has an unknown category ${sign.category}.');
+      }
+    }
+    return [
       for (final c in categories)
-        (c as Map<String, dynamic>)['id'] as String: c['title'] as String,
-    };
+        SignCategory.fromJson(c, signs.where((s) => s.category == c['id']).toList()),
+    ];
   }
 
   Future<List<RoadSign>> loadSigns() async {

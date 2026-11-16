@@ -1,8 +1,8 @@
 # Traffic Law KH: Project Milestone 2
 
-**Course:** CADT | IDT, Mobile Dev Term 19, Gen 11
-**Team:** Vorng Viseth, Vong Sovanpanha
-**Project:** Traffic Law KH, a Flutter app that teaches Cambodian traffic law in Khmer
+- **Course:** CADT | IDT, Mobile Dev Term 1, Gen 11
+- **Team 19:** Vorng Viseth, Vong Sovanpanha
+- **Project:** Traffic Law KH, a Flutter app that teaches Cambodian traffic law in Khmer
 
 ---
 
@@ -21,6 +21,7 @@ lib/
 │   ├── topic.dart
 │   ├── chapter.dart
 │   ├── road_sign.dart
+│   ├── sign_category.dart
 │   ├── quiz.dart
 │   └── quiz_result.dart
 ├── service/
@@ -51,7 +52,7 @@ assets/data/
 
 ## 3. Model layer
 
-The model contains six classes, which meets the requirement of at least 3.
+The model contains seven classes, which meets the requirement of at least 3.
 
 ### 3.1 Classes
 
@@ -61,24 +62,26 @@ The model contains six classes, which meets the requirement of at least 3.
 | `Question` | `id`, `topicId`, `text`, `image`, `options` (2 to 4), `correctIndex`, `explanation`, `lawPage` | `isCorrect(int)`, `fromJson` | One multiple-choice question |
 | `Chapter` | `id` (int), `title`, `startPage` (at least 1), `topicId` (optional) | `fromJson` | One chapter of the law, linked to its quiz topic if it has one |
 | `RoadSign` | `id`, `category`, `name`, `meaning`, `image` | `fromJson` | One road sign |
+| `SignCategory` | `id` (String), `title`, `signs` (list of `RoadSign`) | `fromJson` | One group of road signs, such as "warning" |
 | `Quiz` | `questions` (list of `Question`), `answers` | `isFinished`, `currentQuestion`, `addAnswer(int)` | One quiz attempt |
 | `QuizResult` | `topicId`, `score`, `total`, `wrongQuestionIds`, `correctQuestionIds`, `date` | `percent`, `fromJson`, `toJson` | The saved outcome of a quiz on one topic |
 
-Constructors validate their input. For example, a `Question` must have 2 to 4 options and a `correctIndex` inside them, and a `Chapter` must start on page 1 or later.
+Constructors validate their input. For example, a `Question` must have 2 to 4 options and a `correctIndex` inside them, a `Chapter` must start on page 1 or later, and a `SignCategory` only accepts signs of its own category.
 
 ### 3.2 Relationships
 
 | Relationship | Type | Explanation |
 |---|---|---|
 | `Quiz` → `Question` | Aggregation | A quiz holds the questions it was built from. The questions exist independently. |
+| `SignCategory` → `RoadSign` | Aggregation | A category holds the list of its signs. The signs are created on their own and passed in. |
 | `Question` → `Topic` (by `topicId`) | Association | Each question belongs to one topic. |
 | `QuizResult` → `Topic` (by `topicId`) | Association | A saved result refers to the topic it was taken on. |
 | `Chapter` → `Topic` (by `topicId`, optional) | Association | A chapter can name the quiz topic that tests it. A chapter with no quiz has no `topicId`. |
+| `RoadSign` → `SignCategory` (by `category` ID) | Association | Each sign names the category it belongs to. |
 | `LawService` → `Chapter` | Aggregation | The service holds the chapter list, but the chapters exist on their own. |
-| `SignService` → `RoadSign` | Aggregation | The service holds the signs, but the signs exist on their own. |
-| `RoadSign` → category (by `category` ID) | Association | Each sign belongs to one category, identified by its ID. |
+| `SignService` → `SignCategory` | Aggregation | The service holds the categories, but the categories exist on their own. |
 
-The model therefore has four composition or aggregation relationships, which meets the requirement of at least 2.
+The model layer has two aggregation relationships, `Quiz` → `Question` and `SignCategory` → `RoadSign`, which meets the requirement of at least 2. The services add two more: `LawService` → `Chapter` and `SignService` → `SignCategory`.
 
 ## 4. Service layer
 
@@ -116,8 +119,8 @@ The service layer contains four services with 15 business operations.
 
 | Operation | Uses | Description |
 |---|---|---|
-| `signsIn(categoryId)` | `RoadSign`, categories | Returns the signs in one category. |
-| `findSign(id)` | `RoadSign` list | Returns the sign with that ID. |
+| `signsIn(categoryId)` | `SignCategory`, `RoadSign` | Returns the signs in one category. |
+| `findSign(id)` | `SignCategory`, `RoadSign` | Searches every category and returns the sign with that ID. |
 
 ### 4.5 Business rules
 
@@ -131,7 +134,7 @@ The service layer contains four services with 15 business operations.
 | R6 | A practice quiz needs at least one mistake. | `QuizService.startPracticeQuiz` |
 | R7 | A saved result must have at least one question, and its correct and wrong IDs must add up to the total. | `ProgressService.saveResult` |
 | R8 | Progress is only reset after the user confirms. | `ProgressService.resetAll` |
-| R9 | A sign must belong to a known category. | `SignService` constructor |
+| R9 | A sign can only be placed in its own category. | `SignCategory` constructor |
 
 ### 4.6 Preconditions
 
@@ -151,14 +154,14 @@ The service layer contains four services with 15 business operations.
 
 ## 5. Data layer
 
-- **Sign categories** are unofficial for now. `assets/data/signs.json` lists four: Warning, Prohibition, Mandatory and Information, with a note to check them against the 2017 law before release. The docs planned 3–4 categories.
-- **`ContentRepository`** loads `chapters.json`, `signs.json` and `questions.json` once and keeps them in memory. It rejects broken JSON, missing files, duplicate IDs, and questions with no explanation, and it reports each with a `ContentException`.
-- **`ProgressStorage`** is an interface with `saveResult`, `loadResults`, `loadMistakeIds`, `saveMistakeIds` and `resetAll`, the names used in `ARCHITECTURE.md` §6 plus `saveMistakeIds`. **`SharedPrefsProgressStorage`** saves to the phone using the keys `quiz_results` and `mistake_ids`.
-- The mistake rules (R2, R3) are applied in `ProgressService`, not in storage, so the business rules stay in the service layer. `latestScoreByTopic` is also in `ProgressService`, while `ARCHITECTURE.md` §6 lists it under storage.
+- **Sign categories** are not official yet. `assets/data/signs.json` lists four (Warning, Prohibition, Mandatory and Information) and notes that they must be checked against the 2017 law before release.
+- **`ContentRepository`** loads `chapters.json`, `signs.json` and `questions.json` once and keeps them in memory. It groups the signs into their `SignCategory`. It rejects broken JSON, missing files, duplicate IDs, questions with no explanation, and signs whose category is not listed, and it reports each with a `ContentException`.
+- **`ProgressStorage`** is an interface with `saveResult`, `loadResults`, `loadMistakeIds`, `saveMistakeIds` and `resetAll`. **`SharedPrefsProgressStorage`** saves to the phone using the keys `quiz_results` and `mistake_ids`.
+- **Storage only saves and loads.** The mistake rules (R2, R3) and the latest score per topic are worked out in `ProgressService`. This keeps every business rule in the service layer and lets the tests use a fake storage.
 
 ## 6. Test layer
 
-The test suite contains **36 test cases**, which meets the requirement of at least 5. Tests are grouped by the type of scenario they cover.
+The test suite contains **38 test cases**, which meets the requirement of at least 5. Tests are grouped by the type of scenario they cover.
 
 | # | Test | Type |
 |---|---|---|
@@ -193,11 +196,13 @@ The test suite contains **36 test cases**, which meets the requirement of at lea
 | T29 | An unknown chapter is rejected. | Invalid |
 | T30 | Signs are filtered by category. | Normal |
 | T31 | An unknown category is rejected. | Invalid |
-| T32 | A sign with an unknown category is rejected (R9). | Invalid |
+| T32 | A sign placed in the wrong category is rejected (R9). | Invalid |
 | T33 | Results and mistakes survive save and load on phone storage. | Normal |
 | T34 | Reset removes all saved progress from phone storage. | Normal |
 | T35 | A chapter is found from its linked quiz topic. | Normal |
 | T36 | A chapter with no quiz topic is allowed, and no topic finds it. | Boundary |
+| T37 | Signs load from JSON into their categories. | Normal |
+| T38 | A sign whose category is not listed is rejected. | Invalid |
 
 Tests T1, T2, T8 and T13 cover the multi-entity operations, because they involve several classes at once.
 
@@ -214,4 +219,4 @@ flutter test
 | Check | Result |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | All 36 tests passed |
+| `flutter test` | All 38 tests passed |

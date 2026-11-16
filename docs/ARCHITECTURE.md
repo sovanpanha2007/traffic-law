@@ -91,6 +91,7 @@ traffic-law/
 |---|---|---|
 | `Chapter` | `id` (int), `title` (String), `startPage` (int), `topicId` (String, optional: the quiz topic for this chapter) | 3, "ល្បឿន", 21, "speed" |
 | `RoadSign` | `id` (String), `category` (String), `name` (String), `meaning` (String), `image` (String path) | "w01", "warning", … |
+| `SignCategory` | `id` (String), `title` (String), `signs` (List of `RoadSign`) | "warning", "ស្លាកសញ្ញាព្រមាន", [w01, …] |
 | `Topic` | `id` (String), `title` (String) | "speed", "ល្បឿន" |
 | `Question` | `id` (String), `topicId`, `text`, `image` (optional), `options` (List of 2–4 String), `correctIndex` (int), `explanation` (String), `lawPage` (optional int) | – |
 | `QuizResult` | `topicId`, `date` (ISO text), `score` (int), `total` (int), `wrongQuestionIds` (List of String) | "speed", "2026-11-20T09:15", 7, 10, ["sp03", …] |

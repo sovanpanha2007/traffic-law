@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:traffic_law/models/chapter.dart';
 import 'package:traffic_law/models/road_sign.dart';
+import 'package:traffic_law/models/sign_category.dart';
 import 'package:traffic_law/service/law_service.dart';
 import 'package:traffic_law/service/sign_service.dart';
 
@@ -42,31 +43,29 @@ void main() {
   });
 
   test('T30 normal: signs are filtered by category', () {
-    final service = SignService(
-      categories: {'warning': 'Warning', 'ban': 'Ban'},
-      signs: [
+    final service = SignService([
+      SignCategory(id: 'warning', title: 'Warning', signs: [
         RoadSign(id: 'w01', category: 'warning', name: 'a', meaning: 'a', image: 'a.png'),
+      ]),
+      SignCategory(id: 'ban', title: 'Ban', signs: [
         RoadSign(id: 'b01', category: 'ban', name: 'b', meaning: 'b', image: 'b.png'),
-      ],
-    );
+      ]),
+    ]);
 
     expect(service.signsIn('warning').map((s) => s.id), ['w01']);
   });
 
   test('T31 invalid: an unknown category is rejected', () {
-    final service = SignService(categories: {'warning': 'Warning'}, signs: const []);
+    final service = SignService([SignCategory(id: 'warning', title: 'Warning', signs: const [])]);
 
     expect(() => service.signsIn('ban'), throwsArgumentError);
   });
 
-  test('T32 invalid: a sign with an unknown category is rejected when the service is built', () {
+  test('T32 invalid: a sign placed in the wrong category is rejected (R9)', () {
     expect(
-      () => SignService(
-        categories: {'warning': 'Warning'},
-        signs: [
-          RoadSign(id: 'x', category: 'ban', name: 'x', meaning: 'x', image: 'x.png'),
-        ],
-      ),
+      () => SignCategory(id: 'warning', title: 'Warning', signs: [
+        RoadSign(id: 'x', category: 'ban', name: 'x', meaning: 'x', image: 'x.png'),
+      ]),
       throwsArgumentError,
     );
   });

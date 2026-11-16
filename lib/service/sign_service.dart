@@ -1,32 +1,26 @@
 import '../models/road_sign.dart';
+import '../models/sign_category.dart';
 
 class SignService {
-  final Map<String, String> categories;
-  final List<RoadSign> signs;
+  SignService(List<SignCategory> categories) : categories = List.unmodifiable(categories);
 
-  SignService({
-    required Map<String, String> categories,
-    required List<RoadSign> signs,
-  })  : categories = Map.unmodifiable(categories),
-        signs = List.unmodifiable(signs) {
-    for (final sign in signs) {
-      if (!categories.containsKey(sign.category)) {
-        throw ArgumentError('Sign ${sign.id} has an unknown category ${sign.category}.');
-      }
-    }
-  }
+  final List<SignCategory> categories;
 
   List<RoadSign> signsIn(String categoryId) {
-    if (!categories.containsKey(categoryId)) {
-      throw ArgumentError('Category $categoryId does not exist.');
+    for (final category in categories) {
+      if (category.id == categoryId) {
+        return category.signs;
+      }
     }
-    return signs.where((s) => s.category == categoryId).toList();
+    throw ArgumentError('Category $categoryId does not exist.');
   }
 
   RoadSign findSign(String id) {
-    for (final sign in signs) {
-      if (sign.id == id) {
-        return sign;
+    for (final category in categories) {
+      for (final sign in category.signs) {
+        if (sign.id == id) {
+          return sign;
+        }
       }
     }
     throw ArgumentError('Sign $id does not exist.');
