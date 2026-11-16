@@ -1,0 +1,17 @@
+{
+  "topics": [
+    { "id": "speed", "title": "ល្បឿន" }
+  ],
+  "questions": [
+    {
+      "id": "sp01",
+      "topicId": "speed",
+      "text": "placeholder question",
+      "image": null,
+      "options": ["placeholder A", "placeholder B", "placeholder C"],
+      "correctIndex": 1,
+      "explanation": "placeholder explanation",
+      "lawPage": 21
+    }
+  ]
+}

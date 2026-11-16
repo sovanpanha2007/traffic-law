@@ -89,7 +89,7 @@ traffic-law/
 
 | Model | Fields | Example |
 |---|---|---|
-| `Chapter` | `id` (int), `title` (String), `startPage` (int) | 3, "ល្បឿន", 21 |
+| `Chapter` | `id` (int), `title` (String), `startPage` (int), `topicId` (String, optional: the quiz topic for this chapter) | 3, "ល្បឿន", 21, "speed" |
 | `RoadSign` | `id` (String), `category` (String), `name` (String), `meaning` (String), `image` (String path) | "w01", "warning", … |
 | `Topic` | `id` (String), `title` (String) | "speed", "ល្បឿន" |
 | `Question` | `id` (String), `topicId`, `text`, `image` (optional), `options` (List of 2–4 String), `correctIndex` (int), `explanation` (String), `lawPage` (optional int) | – |
@@ -102,7 +102,7 @@ Each model has a `fromJson` factory. `QuizResult` also has `toJson`, because we 
 `assets/data/chapters.json`
 ```json
 [
-  { "id": 1, "title": "បទប្បញ្ញត្តិទូទៅ", "startPage": 1 }
+  { "id": 1, "title": "បទប្បញ្ញត្តិទូទៅ", "startPage": 1, "topicId": null }
 ]
 ```
 
