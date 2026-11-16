@@ -1,0 +1,18 @@
+{
+  "note": "UNOFFICIAL category names. Check against the 2017 Law on Land Traffic before release.",
+  "categories": [
+    { "id": "warning", "title": "ស្លាកសញ្ញាព្រមាន" },
+    { "id": "ban", "title": "ស្លាកសញ្ញាហាមឃាត់" },
+    { "id": "must", "title": "ស្លាកសញ្ញាបង្ខំ" },
+    { "id": "info", "title": "ស្លាកសញ្ញាព័ត៌មាន" }
+  ],
+  "signs": [
+    {
+      "id": "w01",
+      "category": "warning",
+      "name": "placeholder",
+      "meaning": "placeholder",
+      "image": "assets/images/signs/w01.png"
+    }
+  ]
+}
