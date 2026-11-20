@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:traffic_law/models/chapter.dart';
-import 'package:traffic_law/models/road_sign.dart';
-import 'package:traffic_law/models/sign_category.dart';
+import 'package:traffic_law/model/chapter.dart';
+import 'package:traffic_law/model/road_sign.dart';
+import 'package:traffic_law/model/sign_category.dart';
 import 'package:traffic_law/service/law_service.dart';
 import 'package:traffic_law/service/sign_service.dart';
 

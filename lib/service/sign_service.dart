@@ -1,5 +1,5 @@
-import '../models/road_sign.dart';
-import '../models/sign_category.dart';
+import '../model/road_sign.dart';
+import '../model/sign_category.dart';
 
 class SignService {
   SignService(List<SignCategory> categories) : categories = List.unmodifiable(categories);

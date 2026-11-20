@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:traffic_law/models/question.dart';
-import 'package:traffic_law/models/quiz.dart';
+import 'package:traffic_law/model/question.dart';
+import 'package:traffic_law/model/quiz.dart';
 import 'package:traffic_law/service/quiz_service.dart';
 
 import 'test_data.dart';

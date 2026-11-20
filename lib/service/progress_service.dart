@@ -1,5 +1,5 @@
 import '../data/progress_storage.dart';
-import '../models/quiz_result.dart';
+import '../model/quiz_result.dart';
 
 class ProgressService {
   ProgressService(this._storage);

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:traffic_law/models/quiz_result.dart';
+import 'package:traffic_law/model/quiz_result.dart';
 import 'package:traffic_law/service/progress_service.dart';
 
 import 'test_data.dart';

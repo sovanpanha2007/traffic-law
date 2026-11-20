@@ -1,4 +1,4 @@
-import '../models/chapter.dart';
+import '../model/chapter.dart';
 
 class LawService {
   LawService(List<Chapter> chapters) : chapters = _ordered(chapters);

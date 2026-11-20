@@ -1,6 +1,6 @@
 import 'package:traffic_law/data/progress_storage.dart';
-import 'package:traffic_law/models/question.dart';
-import 'package:traffic_law/models/quiz_result.dart';
+import 'package:traffic_law/model/question.dart';
+import 'package:traffic_law/model/quiz_result.dart';
 
 Question makeQuestion(String id, {String topicId = 'speed', int correctIndex = 0}) {
   return Question(

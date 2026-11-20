@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/quiz_result.dart';
+import '../model/quiz_result.dart';
 
 abstract class ProgressStorage {
   Future<List<QuizResult>> loadResults();

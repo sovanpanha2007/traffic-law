@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:traffic_law/data/progress_storage.dart';
-import 'package:traffic_law/models/quiz_result.dart';
+import 'package:traffic_law/model/quiz_result.dart';
 
 void main() {
   test('T33 normal: results and mistakes survive a save and load on the phone storage', () async {

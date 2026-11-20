@@ -2,11 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 
-import '../models/chapter.dart';
-import '../models/question.dart';
-import '../models/road_sign.dart';
-import '../models/sign_category.dart';
-import '../models/topic.dart';
+import '../model/chapter.dart';
+import '../model/question.dart';
+import '../model/road_sign.dart';
+import '../model/sign_category.dart';
+import '../model/topic.dart';
 
 typedef AssetLoader = Future<String> Function(String path);
 

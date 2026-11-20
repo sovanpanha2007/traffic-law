@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:traffic_law/data/content_repository.dart';
-import 'package:traffic_law/models/chapter.dart';
+import 'package:traffic_law/model/chapter.dart';
 
 void main() {
   test('T20 normal: chapters load from JSON in their stored order', () async {

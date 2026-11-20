@@ -1,6 +1,6 @@
-import '../models/question.dart';
-import '../models/quiz.dart';
-import '../models/quiz_result.dart';
+import '../model/question.dart';
+import '../model/quiz.dart';
+import '../model/quiz_result.dart';
 
 class QuizService {
   Quiz startTopicQuiz(String topicId, List<Question> allQuestions) {
