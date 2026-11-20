@@ -57,12 +57,15 @@ traffic-law/
 │   ├── core/
 │   │   ├── app_theme.dart        # colors, fonts, text styles (from DESIGN.md)
 │   │   └── strings.dart          # ALL Khmer UI text in one place
-│   ├── models/
+│   ├── model/
 │   │   ├── chapter.dart
 │   │   ├── road_sign.dart
+│   │   ├── sign_category.dart
 │   │   ├── topic.dart
 │   │   ├── question.dart
+│   │   ├── quiz.dart
 │   │   └── quiz_result.dart
+│   ├── service/                  # business rules (quiz, progress, law, signs)
 │   ├── data/
 │   │   ├── content_repository.dart   # reads JSON from assets
 │   │   └── progress_storage.dart     # saves/reads progress on the phone
@@ -83,7 +86,7 @@ traffic-law/
 └── docs/                         # these planning docs
 ```
 
-**Rule to avoid Git conflicts:** each person owns different files. Viseth owns `screens/home`, `screens/law`, `screens/signs`, `screens/quiz/progress_screen.dart`, `chapters.json`, `signs.json`. Sue owns `core/`, `models/`, `data/`, the other files in `screens/quiz`, and `questions.json`. `pubspec.yaml` is changed **only by Viseth**: ask him if you need a package or asset folder.
+**Rule to avoid Git conflicts:** each person owns different files. Viseth owns `screens/home`, `screens/law`, `screens/signs`, `screens/quiz/progress_screen.dart`, `chapters.json`, `signs.json`. Sue owns `core/`, `model/`, `data/`, the other files in `screens/quiz`, and `questions.json`. `pubspec.yaml` is changed **only by Viseth**: ask him if you need a package or asset folder.
 
 ## 4. Data models
 
@@ -94,7 +97,7 @@ traffic-law/
 | `SignCategory` | `id` (String), `title` (String), `signs` (List of `RoadSign`) | "warning", "ស្លាកសញ្ញាព្រមាន", [w01, …] |
 | `Topic` | `id` (String), `title` (String) | "speed", "ល្បឿន" |
 | `Question` | `id` (String), `topicId`, `text`, `image` (optional), `options` (List of 2–4 String), `correctIndex` (int), `explanation` (String), `lawPage` (optional int) | – |
-| `QuizResult` | `topicId`, `date` (ISO text), `score` (int), `total` (int), `wrongQuestionIds` (List of String) | "speed", "2026-11-20T09:15", 7, 10, ["sp03", …] |
+| `QuizResult` | `topicId`, `date` (ISO text), `score` (int), `total` (int), `wrongQuestionIds` (List of String), `correctQuestionIds` (List of String) | "speed", "2026-11-20T09:15", 7, 10, ["sp03", …] |
 
 Each model has a `fromJson` factory. `QuizResult` also has `toJson`, because we save it.
 

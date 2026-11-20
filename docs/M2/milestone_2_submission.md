@@ -8,15 +8,27 @@
 
 ## 1. Scope of this milestone
 
-Milestone 2 covers the **model layer**, the **service layer** and the **test layer** for the whole app's logic: law chapters, road signs, quizzes, progress and saved content. The screens and the PDF viewer are not part of this submission.
+Milestone 2 covers the **model layer**, the **service layer** and the **test layer** for the whole app's logic: law chapters, road signs, quizzes, progress, and loading the content files. The screens and the PDF viewer are not part of this submission.
 
 Milestone 1 described the business goal, the users, the use cases and the functional requirements. This milestone implements the domain logic behind each of them.
+
+### Requirements at a glance
+
+| Requirement | Minimum | This project | Where |
+|---|---|---|---|
+| Classes in the model | 3 | 7 | §3.1 |
+| Composition or aggregation in the model | 2 | 2 | §3.2 |
+| Business operations | 3 | 15 | §4 |
+| Operations that use several entities | 1 | `QuizService.finish`, `ProgressService.saveResult` | §4.1, §4.2 |
+| Business rules or validations | 1 | 9 rules, plus preconditions | §4.5, §4.6 |
+| Test cases | 5 | 46 | §6 |
+| Test types | Normal, invalid, boundary | All three, plus special cases | §6 |
 
 ## 2. Architecture
 
 ```text
 lib/
-├── models/
+├── model/
 │   ├── question.dart
 │   ├── topic.dart
 │   ├── chapter.dart
@@ -45,14 +57,12 @@ assets/data/
 └── questions.json
 ```
 
-- **`models/`** holds the classes that represent the business domain. Each one has a `fromJson` factory where it is loaded from a file.
+- **`model/`** holds the classes that represent the business domain. Every class that is read from a file has a `fromJson` factory. `Quiz` has none, because it is only built in memory.
 - **`service/`** holds the business operations and rules.
 - **`data/`** loads the content files and saves progress. The services never touch the files or the phone directly.
-- **`test/`** holds the tests. The tests use a fake storage class instead of the phone.
+- **`test/`** holds the tests. Service tests use a fake storage class instead of the phone. The phone storage itself is tested with a mock of `SharedPreferences` (T33, T34).
 
 ## 3. Model layer
-
-The model contains seven classes, which meets the requirement of at least 3.
 
 ### 3.1 Classes
 
@@ -66,7 +76,7 @@ The model contains seven classes, which meets the requirement of at least 3.
 | `Quiz` | `questions` (list of `Question`), `answers` | `isFinished`, `currentQuestion`, `addAnswer(int)` | One quiz attempt |
 | `QuizResult` | `topicId`, `score`, `total`, `wrongQuestionIds`, `correctQuestionIds`, `date` | `percent`, `fromJson`, `toJson` | The saved outcome of a quiz on one topic |
 
-Constructors validate their input. For example, a `Question` must have 2 to 4 options and a `correctIndex` inside them, a `Chapter` must start on page 1 or later, and a `SignCategory` only accepts signs of its own category.
+Constructors and methods validate their input. For example, a `Question` must have 2 to 4 options and a `correctIndex` inside them, a `Chapter` must start on page 1 or later, a `SignCategory` only accepts signs of its own category, and `Quiz.addAnswer` rejects an answer after the last question or outside the options.
 
 ### 3.2 Relationships
 
@@ -81,11 +91,11 @@ Constructors validate their input. For example, a `Question` must have 2 to 4 op
 | `LawService` → `Chapter` | Aggregation | The service holds the chapter list, but the chapters exist on their own. |
 | `SignService` → `SignCategory` | Aggregation | The service holds the categories, but the categories exist on their own. |
 
-The model layer has two aggregation relationships, `Quiz` → `Question` and `SignCategory` → `RoadSign`, which meets the requirement of at least 2. The services add two more: `LawService` → `Chapter` and `SignService` → `SignCategory`.
+The model layer has two aggregation relationships, `Quiz` → `Question` and `SignCategory` → `RoadSign`. The services add two more: `LawService` → `Chapter` and `SignService` → `SignCategory`.
 
 ## 4. Service layer
 
-The service layer contains four services with 15 business operations.
+The service layer has four services. Each table below lists one service's operations and the classes they use.
 
 ### 4.1 `QuizService`
 
@@ -93,8 +103,8 @@ The service layer contains four services with 15 business operations.
 |---|---|---|
 | `startTopicQuiz(topicId, allQuestions)` | `Question`, `Quiz` | Builds a quiz from one topic's questions. |
 | `startPracticeQuiz(allQuestions, mistakeIds)` | `Question`, `Quiz` | Builds a quiz from the user's mistake questions, across topics. |
-| `answer(quiz, index)` | `Quiz`, `Question` | Records an answer to the current question. |
-| `finish(quiz)` | `Quiz`, `QuizResult` | Returns one `QuizResult` per topic covered, or `null` if the quiz isn't finished. |
+| `answer(quiz, index)` | `Quiz`, `Question` | Records an answer to the current question. The checks live in `Quiz.addAnswer`, so they also apply when a screen uses the quiz directly. |
+| `finish(quiz)` | `Quiz`, `Question`, `QuizResult` | Returns one `QuizResult` per topic covered, or `null` if the quiz isn't finished. Uses several entities at once. |
 
 ### 4.2 `ProgressService`
 
@@ -104,7 +114,7 @@ The service layer contains four services with 15 business operations.
 | `saveResult(result)` | `QuizResult`, mistake list, `ProgressStorage` | Stores the result, adds wrong IDs to the mistake list, removes correct IDs, and saves both. Uses several entities at once. |
 | `latestScoreByTopic()` | `QuizResult` list | Returns each topic's score from its newest result. |
 | `isWeak(topicId)` | `latestScoreByTopic` | True when the latest score is below 70%. |
-| `resetAll(confirmed)` | `ProgressStorage` | Clears all progress, only after confirmation. |
+| `resetAll({confirmed})` | `ProgressStorage` | Clears all progress, only after confirmation. |
 
 ### 4.3 `LawService`
 
@@ -124,17 +134,19 @@ The service layer contains four services with 15 business operations.
 
 ### 4.5 Business rules
 
-| # | Rule | Enforced by |
-|---|---|---|
-| R1 | A quiz cannot be started on a topic with no questions. | `QuizService.startTopicQuiz` |
-| R2 | A question answered wrong is added to the mistake list. | `ProgressService.saveResult` |
-| R3 | A mistake is removed after the user answers that question correctly once, in any quiz. | `ProgressService.saveResult` |
-| R4 | A topic is "weak" when its latest score is below 70%. | `ProgressService.isWeak` |
-| R5 | A quiz quit midway is not saved. | `QuizService.finish` returns `null` |
-| R6 | A practice quiz needs at least one mistake. | `QuizService.startPracticeQuiz` |
-| R7 | A saved result must have at least one question, and its correct and wrong IDs must add up to the total. | `ProgressService.saveResult` |
-| R8 | Progress is only reset after the user confirms. | `ProgressService.resetAll` |
-| R9 | A sign can only be placed in its own category. | `SignCategory` constructor |
+| # | Rule | Enforced by | Tested by |
+|---|---|---|---|
+| R1 | A quiz cannot be started on a topic with no questions. | `QuizService.startTopicQuiz` | T5 |
+| R2 | A question answered wrong is added to the mistake list. | `ProgressService.saveResult` | T12, T13 |
+| R3 | A mistake is removed after the user answers that question correctly once, in any quiz. | `ProgressService.saveResult` | T12 |
+| R4 | A topic is "weak" when its latest score is below 70%. A topic with no result yet is not weak. | `ProgressService.isWeak` | T11, T15, T39, T40 |
+| R5 | A quiz quit midway is not saved. | `QuizService.finish` returns `null` | T7 |
+| R6 | A practice quiz needs at least one mistake. | `QuizService.startPracticeQuiz` | T9 |
+| R7 | A saved result must have at least one question, its correct and wrong IDs must add up to the total, and its score must equal the number of correct IDs. | `ProgressService.saveResult` | T16, T17, T44 |
+| R8 | Progress is only reset after the user confirms. | `ProgressService.resetAll` | T18, T19 |
+| R9 | A sign can only be placed in its own category. | `SignCategory` constructor | T32 |
+
+The 70% limit is our own choice, because we don't know the real test's pass mark. It is one named constant, `ProgressService.weakThreshold`, so changing it is a one-line edit.
 
 ### 4.6 Preconditions
 
@@ -143,10 +155,11 @@ The service layer contains four services with 15 business operations.
 | `startTopicQuiz` | Topic has at least one question | `ArgumentError` |
 | `startPracticeQuiz` | At least one mistake ID | `StateError` |
 | `startPracticeQuiz` | At least one mistake exists in the content | `ArgumentError` |
-| `answer` | Quiz isn't finished | `StateError` |
-| `answer` | Index is inside the options | `RangeError` |
+| `answer` / `Quiz.addAnswer` | Quiz isn't finished | `StateError` |
+| `answer` / `Quiz.addAnswer` | Index is inside the options | `RangeError` |
 | `saveResult` | Total is at least 1 | `ArgumentError` |
 | `saveResult` | Correct + wrong IDs equal the total | `ArgumentError` |
+| `saveResult` | Score equals the number of correct IDs | `ArgumentError` |
 | `resetAll` | `confirmed` is `true` | `StateError` |
 | `findChapter` | Chapter exists | `ArgumentError` |
 | `signsIn` | Category exists | `ArgumentError` |
@@ -155,13 +168,18 @@ The service layer contains four services with 15 business operations.
 ## 5. Data layer
 
 - **Sign categories** are not official yet. `assets/data/signs.json` lists four (Warning, Prohibition, Mandatory and Information) and notes that they must be checked against the 2017 law before release.
-- **`ContentRepository`** loads `chapters.json`, `signs.json` and `questions.json` once and keeps them in memory. It groups the signs into their `SignCategory`. It rejects broken JSON, missing files, duplicate IDs, questions with no explanation, and signs whose category is not listed, and it reports each with a `ContentException`.
-- **`ProgressStorage`** is an interface with `saveResult`, `loadResults`, `loadMistakeIds`, `saveMistakeIds` and `resetAll`. **`SharedPrefsProgressStorage`** saves to the phone using the keys `quiz_results` and `mistake_ids`.
+- **`ContentRepository`** loads `chapters.json`, `signs.json` and `questions.json` once and keeps them in memory. It groups the signs into their `SignCategory`. It rejects broken JSON, missing files, missing or wrong-type fields, duplicate chapter, sign or question IDs, questions with no explanation or an unknown topic, and signs whose category is not listed. It reports each with a `ContentException`, so a typo in a content file shows a clear message instead of crashing the app.
+- **`ProgressStorage`** is an interface with `saveResult`, `loadResults`, `loadMistakeIds`, `saveMistakeIds` and `resetAll`. **`SharedPrefsProgressStorage`** saves to the phone using the keys `quiz_results` and `mistake_ids`. All quiz results are kept, with no limit, so a chart of past scores can be added later.
 - **Storage only saves and loads.** The mistake rules (R2, R3) and the latest score per topic are worked out in `ProgressService`. This keeps every business rule in the service layer and lets the tests use a fake storage.
+- **English content** is planned. It will come as a second set of JSON files, one set per language. Only `ContentRepository` has to pick the right file, so the models and services stay the same.
 
 ## 6. Test layer
 
-The test suite contains **38 test cases**, which meets the requirement of at least 5. Tests are grouped by the type of scenario they cover.
+The tests are split by area, with one table per test file. Each test is labelled with the type of scenario it covers. The T-numbers are fixed IDs, so a new test takes the next free number and goes in the table for its area.
+
+Tests T1, T2, T8 and T13 cover operations that use several entities at once.
+
+### 6.1 Quiz (`quiz_service_test.dart`)
 
 | # | Test | Type |
 |---|---|---|
@@ -175,6 +193,12 @@ The test suite contains **38 test cases**, which meets the requirement of at lea
 | T8 | A practice quiz across two topics gives one result per topic. | Multi-entity |
 | T9 | A practice quiz with no mistakes is rejected (R6). | Invalid |
 | T10 | A practice quiz whose mistakes are not in the content is rejected. | Invalid |
+| T43 | Calling `addAnswer` on the quiz after the last question is rejected. | Invalid |
+
+### 6.2 Progress (`progress_service_test.dart`)
+
+| # | Test | Type |
+|---|---|---|
 | T11 | A score of exactly 70% is not weak (R4). | Boundary |
 | T12 | A correct answer removes the question from the mistake list (R3). | Special case |
 | T13 | Saving a result writes results and mistakes to storage. | Normal |
@@ -184,6 +208,14 @@ The test suite contains **38 test cases**, which meets the requirement of at lea
 | T17 | A result whose IDs don't add up to the total is rejected (R7). | Invalid |
 | T18 | Reset without confirmation is rejected (R8). | Invalid |
 | T19 | Confirmed reset clears results and mistakes. | Normal |
+| T39 | A score just under 70% is weak (R4). | Boundary |
+| T40 | A topic with no result yet is not weak (R4). | Special case |
+| T44 | A result whose score does not match its correct IDs is rejected (R7). | Invalid |
+
+### 6.3 Content loading (`content_repository_test.dart`)
+
+| # | Test | Type |
+|---|---|---|
 | T20 | Chapters load from JSON in stored order. | Normal |
 | T21 | A second load does not read the file again. | Normal |
 | T22 | Broken JSON shows an error, not a crash. | Invalid |
@@ -191,20 +223,32 @@ The test suite contains **38 test cases**, which meets the requirement of at lea
 | T24 | Duplicate question IDs are rejected. | Invalid |
 | T25 | A question with no explanation is rejected. | Invalid |
 | T26 | A chapter cannot start before page 1. | Boundary |
+| T37 | Signs load from JSON into their categories. | Normal |
+| T38 | A sign whose category is not listed is rejected. | Invalid |
+| T45 | A sign with a missing field shows an error, not a crash. | Invalid |
+| T46 | A question with an unknown topic is rejected. | Invalid |
+
+### 6.4 Law and signs (`law_and_sign_service_test.dart`)
+
+| # | Test | Type |
+|---|---|---|
 | T27 | Chapters are returned in ID order. | Normal |
 | T28 | The start page of a chapter is found by ID. | Normal |
 | T29 | An unknown chapter is rejected. | Invalid |
 | T30 | Signs are filtered by category. | Normal |
 | T31 | An unknown category is rejected. | Invalid |
 | T32 | A sign placed in the wrong category is rejected (R9). | Invalid |
-| T33 | Results and mistakes survive save and load on phone storage. | Normal |
-| T34 | Reset removes all saved progress from phone storage. | Normal |
 | T35 | A chapter is found from its linked quiz topic. | Normal |
 | T36 | A chapter with no quiz topic is allowed, and no topic finds it. | Boundary |
-| T37 | Signs load from JSON into their categories. | Normal |
-| T38 | A sign whose category is not listed is rejected. | Invalid |
+| T41 | A sign is found by ID in any category. | Normal |
+| T42 | An unknown sign is rejected. | Invalid |
 
-Tests T1, T2, T8 and T13 cover the multi-entity operations, because they involve several classes at once.
+### 6.5 Phone storage (`shared_prefs_storage_test.dart`)
+
+| # | Test | Type |
+|---|---|---|
+| T33 | Results and mistakes survive save and load on phone storage. | Normal |
+| T34 | Reset removes all saved progress from phone storage. | Normal |
 
 ## 7. How to run
 
@@ -216,7 +260,9 @@ flutter test
 
 ## 8. Results
 
+Checked on 20 November 2026.
+
 | Check | Result |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | All 38 tests passed |
+| `flutter test` | All 46 tests passed |
