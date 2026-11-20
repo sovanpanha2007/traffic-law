@@ -30,6 +30,9 @@ class ProgressService {
     if (result.wrongQuestionIds.length + result.correctQuestionIds.length != result.total) {
       throw ArgumentError('The answered question IDs do not match the total.');
     }
+    if (result.score != result.correctQuestionIds.length) {
+      throw ArgumentError('The score does not match the number of correct answers.');
+    }
     _results.add(result);
     _mistakeIds.addAll(result.wrongQuestionIds);
     _mistakeIds.removeAll(result.correctQuestionIds);

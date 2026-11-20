@@ -144,4 +144,34 @@ void main() {
     expect(storage.results, isEmpty);
     expect(storage.mistakeIds, isEmpty);
   });
+
+  test('T39 boundary: a score just under 70% is marked weak (R4)', () async {
+    await service.saveResult(QuizResult(
+      topicId: 'speed',
+      score: 9,
+      total: 13,
+      wrongQuestionIds: const ['q10', 'q11', 'q12', 'q13'],
+      correctQuestionIds: [for (var i = 1; i <= 9; i++) 'q$i'],
+    ));
+
+    expect(service.latestScoreByTopic()['speed'], lessThan(70));
+    expect(service.isWeak('speed'), isTrue);
+  });
+
+  test('T40 special case: a topic with no result yet is not weak (R4)', () {
+    expect(service.isWeak('speed'), isFalse);
+  });
+
+  test('T44 invalid: a result whose score does not match its correct IDs is rejected (R7)', () async {
+    expect(
+      () => service.saveResult(QuizResult(
+        topicId: 'speed',
+        score: 2,
+        total: 2,
+        wrongQuestionIds: const ['q2'],
+        correctQuestionIds: const ['q1'],
+      )),
+      throwsArgumentError,
+    );
+  });
 }

@@ -23,10 +23,6 @@ class QuizService {
   }
 
   void answer(Quiz quiz, int index) {
-    final options = quiz.currentQuestion.options;
-    if (index < 0 || index >= options.length) {
-      throw RangeError.index(index, options);
-    }
     quiz.addAnswer(index);
   }
 

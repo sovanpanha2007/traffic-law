@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:traffic_law/models/question.dart';
+import 'package:traffic_law/models/quiz.dart';
 import 'package:traffic_law/service/quiz_service.dart';
 
 import 'test_data.dart';
@@ -96,5 +97,13 @@ void main() {
       () => service.startPracticeQuiz(makeQuestions('speed', 2), ['missing']),
       throwsArgumentError,
     );
+  });
+
+  test('T43 invalid: calling addAnswer on the quiz after the last question is rejected', () {
+    final quiz = Quiz([makeQuestion('speed1')]);
+    quiz.addAnswer(0);
+
+    expect(() => quiz.addAnswer(0), throwsStateError);
+    expect(quiz.isFinished, isTrue);
   });
 }

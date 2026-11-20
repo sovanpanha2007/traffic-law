@@ -90,6 +90,25 @@ void main() {
     expect(repo.loadSignCategories(), throwsA(isA<ContentException>()));
   });
 
+  test('T45 invalid: a sign with a missing field shows an error, not a crash', () async {
+    final repo = ContentRepository(
+      loader: (_) async => '{"categories":[{"id":"warning","title":"Warning"}],'
+          '"signs":[{"id":"w01","category":"warning","meaning":"a","image":"a.png"}]}',
+    );
+
+    expect(repo.loadSigns(), throwsA(isA<ContentException>()));
+  });
+
+  test('T46 invalid: a question with an unknown topic is rejected', () async {
+    final repo = ContentRepository(
+      loader: (_) async => '{"topics":[{"id":"speed","title":"Speed"}],'
+          '"questions":[{"id":"pk01","topicId":"parking","text":"a",'
+          '"options":["x","y"],"correctIndex":0,"explanation":"e"}]}',
+    );
+
+    expect(repo.loadQuestions(), throwsA(isA<ContentException>()));
+  });
+
   test('T26 boundary: a chapter cannot start before page 1', () {
     expect(
       () => Chapter(id: 1, title: 'Bad', startPage: 0),

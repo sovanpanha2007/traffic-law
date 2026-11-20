@@ -18,6 +18,10 @@ class Quiz {
   }
 
   void addAnswer(int index) {
+    final options = currentQuestion.options;
+    if (index < 0 || index >= options.length) {
+      throw RangeError.index(index, options);
+    }
     _answers.add(index);
   }
 }

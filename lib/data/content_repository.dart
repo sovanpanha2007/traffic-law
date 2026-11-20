@@ -32,61 +32,79 @@ class ContentRepository {
 
   Future<List<Chapter>> loadChapters() async {
     final json = await _readList(chaptersPath);
-    try {
+    return _parse(chaptersPath, () {
       final chapters = json.map((e) => Chapter.fromJson(e as Map<String, dynamic>)).toList();
       _checkUniqueIds(chapters.map((c) => c.id.toString()), chaptersPath);
       return chapters;
-    } on ContentException {
-      rethrow;
-    } catch (e) {
-      throw ContentException('Could not read $chaptersPath: $e');
-    }
+    });
   }
 
   Future<List<SignCategory>> loadSignCategories() async {
     final json = await _readMap(signsPath);
-    final categories = (json['categories'] as List).cast<Map<String, dynamic>>();
     final signs = await loadSigns();
-    final categoryIds = categories.map((c) => c['id'] as String).toSet();
-    for (final sign in signs) {
-      if (!categoryIds.contains(sign.category)) {
-        throw ContentException('Sign ${sign.id} has an unknown category ${sign.category}.');
+    return _parse(signsPath, () {
+      final categories = (json['categories'] as List).cast<Map<String, dynamic>>();
+      final categoryIds = categories.map((c) => c['id'] as String).toSet();
+      for (final sign in signs) {
+        if (!categoryIds.contains(sign.category)) {
+          throw ContentException('Sign ${sign.id} has an unknown category ${sign.category}.');
+        }
       }
-    }
-    return [
-      for (final c in categories)
-        SignCategory.fromJson(c, signs.where((s) => s.category == c['id']).toList()),
-    ];
+      return [
+        for (final c in categories)
+          SignCategory.fromJson(c, signs.where((s) => s.category == c['id']).toList()),
+      ];
+    });
   }
 
   Future<List<RoadSign>> loadSigns() async {
     final json = await _readMap(signsPath);
-    final signs = (json['signs'] as List)
-        .map((e) => RoadSign.fromJson(e as Map<String, dynamic>))
-        .toList();
-    _checkUniqueIds(signs.map((s) => s.id), signsPath);
-    return signs;
+    return _parse(signsPath, () {
+      final signs = (json['signs'] as List)
+          .map((e) => RoadSign.fromJson(e as Map<String, dynamic>))
+          .toList();
+      _checkUniqueIds(signs.map((s) => s.id), signsPath);
+      return signs;
+    });
   }
 
   Future<List<Topic>> loadTopics() async {
     final json = await _readMap(questionsPath);
-    return (json['topics'] as List)
-        .map((e) => Topic.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return _parse(questionsPath, () {
+      return (json['topics'] as List)
+          .map((e) => Topic.fromJson(e as Map<String, dynamic>))
+          .toList();
+    });
   }
 
   Future<List<Question>> loadQuestions() async {
     final json = await _readMap(questionsPath);
-    final questions = (json['questions'] as List)
-        .map((e) => Question.fromJson(e as Map<String, dynamic>))
-        .toList();
-    _checkUniqueIds(questions.map((q) => q.id), questionsPath);
-    for (final q in questions) {
-      if (q.explanation.trim().isEmpty) {
-        throw ContentException('Question ${q.id} has no explanation.');
+    final topicIds = (await loadTopics()).map((t) => t.id).toSet();
+    return _parse(questionsPath, () {
+      final questions = (json['questions'] as List)
+          .map((e) => Question.fromJson(e as Map<String, dynamic>))
+          .toList();
+      _checkUniqueIds(questions.map((q) => q.id), questionsPath);
+      for (final q in questions) {
+        if (q.explanation.trim().isEmpty) {
+          throw ContentException('Question ${q.id} has no explanation.');
+        }
+        if (!topicIds.contains(q.topicId)) {
+          throw ContentException('Question ${q.id} has an unknown topic ${q.topicId}.');
+        }
       }
+      return questions;
+    });
+  }
+
+  T _parse<T>(String path, T Function() parse) {
+    try {
+      return parse();
+    } on ContentException {
+      rethrow;
+    } catch (e) {
+      throw ContentException('Could not read $path: $e');
     }
-    return questions;
   }
 
   Future<List<dynamic>> _readList(String path) async {

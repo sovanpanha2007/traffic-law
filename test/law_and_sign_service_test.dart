@@ -69,4 +69,21 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('T41 normal: a sign is found by ID in any category', () {
+    final service = SignService([
+      SignCategory(id: 'warning', title: 'Warning', signs: const []),
+      SignCategory(id: 'ban', title: 'Ban', signs: [
+        RoadSign(id: 'b01', category: 'ban', name: 'b', meaning: 'b', image: 'b.png'),
+      ]),
+    ]);
+
+    expect(service.findSign('b01').category, 'ban');
+  });
+
+  test('T42 invalid: an unknown sign is rejected', () {
+    final service = SignService([SignCategory(id: 'warning', title: 'Warning', signs: const [])]);
+
+    expect(() => service.findSign('x'), throwsArgumentError);
+  });
 }
